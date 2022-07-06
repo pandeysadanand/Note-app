@@ -1,0 +1,7 @@
+django
+pytest-django
+psycopg2
+coverage
+djangorestframework
+faker
+jwt
