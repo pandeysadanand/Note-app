@@ -6,12 +6,11 @@ from note.models import Note
 class NoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Note
-        fields = ['id', 'title', 'color', 'description', 'note_id']
+        fields = ['id', 'title', 'color', 'description', 'user_id']
         # fields = '__all__'
 
         def update(self, instance, validated_data):
-            print(validated_data.get('note_id'))
-            instance.author_id = validated_data.get('note_id')
+            instance.user_id = validated_data.get('user_id')
             instance.title = validated_data.get('title', instance.title)
             instance.color = validated_data.get('color', instance.color)
             instance.description = validated_data.get('description', instance.description)
