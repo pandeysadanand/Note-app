@@ -1,11 +1,18 @@
-from django.contrib.auth import authenticate
-from django.http import HttpResponse
-from rest_framework.decorators import api_view
+import logging
+
+from django.contrib import auth
+from django.core.mail import send_mail
+from django.http import HttpResponse, JsonResponse
+from jwt import ExpiredSignatureError, DecodeError
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from rest_framework import status
+from .models import User
 from .serializers import UserSerializer
+from .utils import EncodeDecode
+
+logging.basicConfig(filename="view.log", filemode="w")
 
 
 def index(request):
@@ -15,22 +22,62 @@ def index(request):
 class Signup(APIView):
 
     def post(self, request):
+        """
+            Registering new user with name, phone location, email
+        """
+        serializer = UserSerializer(data=request.data)
         try:
-            serializer = UserSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response({'data': serializer.data}, status=status.HTTP_201_CREATED)
+            user = User.objects.create_user(**request.data)
+            token = EncodeDecode.encode_token({"id": user.pk})
+            url = "http://127.0.0.1:8000/user/validate/" + str(token)
+            send_mail("register", url, serializer.data['email'], ['testingapis0275@gmail.com'], fail_silently=False)
+            return Response({"message": "data store successfully", "data": {"username": serializer.data}})
         except Exception as e:
-            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            logging.error(e)
+            return Response({'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request):
+        user = User.objects.all()
+        serializer = UserSerializer(user, many=True)
+        return JsonResponse(serializer.data, safe=False)
 
 
 class Login(APIView):
     def post(self, request):
+        """
+            login existing user with username and password
+        """
         try:
-            user = authenticate(username=request.data.get("username"), password=request.data.get("password"))
-            if user:
-                return Response({"message": "successfully login"}, status=status.HTTP_200_OK)
+            username = request.data.get("username")
+            password = request.data.get("password")
+            user = auth.authenticate(username=username, password=password)
+            print(user)
+            if user is not None:
+                token = EncodeDecode.encode_token(payload={"user_id": user.pk})
+                return Response({"message": "login successful", "data": {"token": token}}, status=status.HTTP_200_OK)
             else:
-                return Response({"message": "login error"}, status=status.HTTP_401_UNAUTHORIZED)
+                return Response({"message": "user login unsuccessful", "data": {}}, status=status.HTTP_401_UNAUTHORIZED)
         except Exception as e:
+            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ValidateToken(APIView):
+    def get(self, request, token):
+        """
+            Checking existing token whether it is valid or expired
+        """
+        try:
+            decode_token = EncodeDecode.decode_token(token=token)
+            user = User.objects.get(id=decode_token.get('id'))
+            user.is_verified = True
+            user.save()
+            return Response({"message": "Validate Successfully", "data": user.pk},
+                            status=status.HTTP_201_CREATED)
+        except ExpiredSignatureError:
+            return Response({"message": "token expired"}, status=status.HTTP_401_UNAUTHORIZED)
+        except DecodeError:
+            return Response({"message": "wrong token"}, status=status.HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+            logging.error(e)
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
