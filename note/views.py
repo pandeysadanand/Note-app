@@ -3,11 +3,11 @@ import logging
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.utils import json
 from rest_framework.views import APIView
 
 from .models import Note
 from .serializers import NoteSerializer
+from .utils import verify_token
 
 logging.basicConfig(filename="view.log", filemode="w")
 
@@ -17,14 +17,17 @@ class NoteView(APIView):
         Creating note view and performing crud operation
     """
 
-    def put(self, request, pk):
+    @verify_token
+    def put(self, request):
         """
             Updating existing note using id
         """
         try:
-            note_data = json.loads(request.body)
-            note = Note.objects.get(pk=pk)
-            serializer = NoteSerializer(note, data=note_data)
+            # note_data = json.loads(request.data)
+
+            note = Note.objects.get(pk=request.data.get('note_id'))
+            print(note)
+            serializer = NoteSerializer(note, data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response({"message": "data updated successfully", "data": serializer.data},
@@ -34,20 +37,7 @@ class NoteView(APIView):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        # note_data = Note.objects.get(pk=request.data["id"])
-        # print(note_data)
-        # serializer = NoteSerializer(data=request.data)
-        # try:
-        #     serializer.is_valid(raise_exception=True)
-        #     serializer.save()
-        #     return Response({
-        #         "message": "user updated successfully",
-        #         "data": serializer.data
-        #     })
-        # except Exception as e:
-        #     logging.error(e)
-        #     return Response(serializer.errors)
-
+    @verify_token
     def post(self, request):
         """
             Registering note
@@ -61,12 +51,13 @@ class NoteView(APIView):
             # logging.error(e)
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+    @verify_token
     def delete(self, request):
         """
             Deleting particular note
         """
         try:
-            note = Note.objects.get(id=request.data.get('id'))
+            note = Note.objects.get(id=request.data.get('note_id'))
             note.delete()
             return Response({"message": "deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
         except note.DoesNotExist as dne:
@@ -74,6 +65,7 @@ class NoteView(APIView):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+    @verify_token
     def get(self, request):
         """
             Displaying note details

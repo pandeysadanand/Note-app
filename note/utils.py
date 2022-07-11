@@ -14,15 +14,18 @@ def verify_token(function):
         creating function to verify token
     """
     @wraps(function)
-    def wrapper(self, request, *args, **kwargs):
+    def wrapper(self, request):
         if 'HTTP_AUTHORIZATION' not in request.META:
             response = Response({"message": 'Token not provided in the header'})
-            response.status_code = 400
+            response.status_code = 401
             logging.info('Token not provided in the header')
             return response
         token = request.META['HTTP_AUTHORIZATION']
-        id = EncodeDecode.decode_token(token)
-        request.data.update({'user_id': id.get("id")})
-        return function(self, request, *args, **kwargs)
+        print(token)
+        id = EncodeDecode().decode_token(token)
+        print(id)
+        request.data.update({'user_id': id.get("user_id")})
+        print(request.data)
+        return function(self, request)
 
     return wrapper
