@@ -1,8 +1,9 @@
 import logging
 
+from django.conf import settings
 from django.contrib import auth
 from django.core.mail import send_mail
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 from jwt import ExpiredSignatureError, DecodeError
 from rest_framework import status
 from rest_framework.response import Response
@@ -28,19 +29,22 @@ class Signup(APIView):
         serializer = UserSerializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
-            user = User.objects.create_user(**request.data)
-            token = EncodeDecode.encode_token({"id": user.pk})
+            # user = User.objects.create_user(**(request.data))
+            serializer.save()
+            token = EncodeDecode().encode_token({"id": serializer.data.get('id')})
+            print(token)
             url = "http://127.0.0.1:8000/user/validate/" + str(token)
-            send_mail("register", url, serializer.data['email'], ['testingapis0275@gmail.com'], fail_silently=False)
+            send_mail("register", url, settings.EMAIL_HOST_USER, [serializer.data['email']], fail_silently=False)
             return Response({"message": "data store successfully", "data": {"username": serializer.data}})
         except Exception as e:
+            print(e)
             logging.error(e)
             return Response({'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
         user = User.objects.all()
         serializer = UserSerializer(user, many=True)
-        return JsonResponse(serializer.data, safe=False)
+        return Response(serializer.data)
 
 
 class Login(APIView):
@@ -54,7 +58,7 @@ class Login(APIView):
             user = auth.authenticate(username=username, password=password)
             print(user)
             if user is not None:
-                token = EncodeDecode.encode_token(payload={"user_id": user.pk})
+                token = EncodeDecode().encode_token(payload={"user_id": user.pk})
                 return Response({"message": "login successful", "data": {"token": token}}, status=status.HTTP_200_OK)
             else:
                 return Response({"message": "user login unsuccessful", "data": {}}, status=status.HTTP_401_UNAUTHORIZED)
@@ -68,7 +72,7 @@ class ValidateToken(APIView):
             Checking existing token whether it is valid or expired
         """
         try:
-            decode_token = EncodeDecode.decode_token(token=token)
+            decode_token = EncodeDecode().decode_token(token=token)
             user = User.objects.get(id=decode_token.get('id'))
             user.is_verified = True
             user.save()

@@ -11,4 +11,4 @@ class EncodeDecode:
         decode_token = jwt.decode(token, "secret", algorithms=["HS256"])
         return decode_token
 
-# todo use generic jwt service , encode and decode for user[utils], registration
+
