@@ -29,3 +29,4 @@ def verify_token(function):
         return function(self, request)
 
     return wrapper
+

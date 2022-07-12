@@ -32,14 +32,12 @@ class Signup(APIView):
             # user = User.objects.create_user(**(request.data))
             serializer.save()
             token = EncodeDecode().encode_token({"id": serializer.data.get('id')})
-            print(token)
             url = "http://127.0.0.1:8000/user/validate/" + str(token)
             send_mail("register", url, settings.EMAIL_HOST_USER, [serializer.data['email']], fail_silently=False)
-            return Response({"message": "data store successfully", "data": {"username": serializer.data}})
+            return Response({"message": "data store successfully", "data": serializer.data}, status=status.HTTP_201_CREATED)
         except Exception as e:
-            print(e)
             logging.error(e)
-            return Response({'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
         user = User.objects.all()
@@ -56,7 +54,7 @@ class Login(APIView):
             username = request.data.get("username")
             password = request.data.get("password")
             user = auth.authenticate(username=username, password=password)
-            print(user)
+
             if user is not None:
                 token = EncodeDecode().encode_token(payload={"user_id": user.pk})
                 return Response({"message": "login successful", "data": {"token": token}}, status=status.HTTP_200_OK)
@@ -85,3 +83,8 @@ class ValidateToken(APIView):
         except Exception as e:
             logging.error(e)
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# todo reddish server, cashing data . install reddish server, python reddish pakg[set and get]
+# key = user_id value=dic 0f note_id[note_details]
+# reddish cll->
