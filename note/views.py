@@ -26,12 +26,11 @@ class NoteView(APIView):
             # note_data = json.loads(request.data)
 
             note = Note.objects.get(pk=request.data.get('note_id'))
-            print(note)
             serializer = NoteSerializer(note, data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response({"message": "data updated successfully", "data": serializer.data},
-                            status=status.HTTP_200_OK)
+                            status=status.HTTP_202_ACCEPTED)
         except ObjectDoesNotExist:
             return Response({"message": "Note not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
@@ -46,7 +45,8 @@ class NoteView(APIView):
         try:
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            return Response({"message": "Creates successfully", "data": serializer.data}, status=status.HTTP_200_OK)
+            return Response({"message": "Creates successfully", "data": serializer.data},
+                            status=status.HTTP_201_CREATED)
         except Exception as e:
             # logging.error(e)
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -73,7 +73,6 @@ class NoteView(APIView):
         try:
             note = Note.objects.filter(user_id=request.data.get('user_id'))
             serializer = NoteSerializer(note, many=True)
-            print(serializer.data)
             return Response({"message": "note found", "data": serializer.data}, status=status.HTTP_200_OK)
         except note.DoesNotExist as dne:
             return Response({"message": "note not found"}, status=status.HTTP_404_NOT_FOUND)
