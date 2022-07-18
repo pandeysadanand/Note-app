@@ -14,6 +14,7 @@ class NoteSerializer(serializers.ModelSerializer):
                 color=validate_data.get("color"),
                 description=validate_data.get("description"),
                 user_id=validate_data.get("user_id"),
+                is_archive=validate_data("is_archive")
             )
             return notes
 
