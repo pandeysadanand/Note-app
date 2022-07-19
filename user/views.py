@@ -34,7 +34,8 @@ class Signup(APIView):
             token = EncodeDecode().encode_token({"id": serializer.data.get('id')})
             url = "http://127.0.0.1:8000/user/validate/" + str(token)
             send_mail("register", url, settings.EMAIL_HOST_USER, [serializer.data['email']], fail_silently=False)
-            return Response({"message": "data store successfully", "data": serializer.data}, status=status.HTTP_201_CREATED)
+            return Response({"message": "data store successfully", "data": serializer.data},
+                            status=status.HTTP_201_CREATED)
         except Exception as e:
             logging.error(e)
             return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)

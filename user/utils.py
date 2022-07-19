@@ -10,5 +10,3 @@ class EncodeDecode:
     def decode_token(self, token):
         decode_token = jwt.decode(token, "secret", algorithms=["HS256"])
         return decode_token
-
-
