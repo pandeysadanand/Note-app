@@ -29,9 +29,7 @@ class Signup(APIView):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             token = EncodeDecode().encode_token({"id": serializer.data.get('id')})
-            # url = "http://127.0.0.1:8000/user/validate/" + str(token)
             send_email.delay(token=str(token), email=serializer.data['email'])
-            # send_mail.delay("register", url, settings.EMAIL_HOST_USER, [serializer.data['email']], fail_silently=False)
             return Response({"message": "data store successfully", "data": serializer.data},
                             status=status.HTTP_201_CREATED)
         except Exception as e:
@@ -82,8 +80,3 @@ class ValidateToken(APIView):
         except Exception as e:
             logging.error(e)
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-
-# todo reddish server, cashing data . install reddish server, python reddish pakg[set and get]
-# key = user_id value=dic 0f note_id[note_details]
-# reddish cll->
