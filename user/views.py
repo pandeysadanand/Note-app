@@ -1,8 +1,6 @@
 import logging
 
-from django.conf import settings
 from django.contrib import auth
-from django.core.mail import send_mail
 from django.http import HttpResponse
 from jwt import ExpiredSignatureError, DecodeError
 from rest_framework import status
@@ -12,7 +10,7 @@ from rest_framework.views import APIView
 from .models import User
 from .serializers import UserSerializer
 from .utils import EncodeDecode
-
+from user.tasks import send_email
 logging.basicConfig(filename="view.log", filemode="w")
 
 
@@ -29,11 +27,11 @@ class Signup(APIView):
         serializer = UserSerializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
-            # user = User.objects.create_user(**(request.data))
             serializer.save()
             token = EncodeDecode().encode_token({"id": serializer.data.get('id')})
-            url = "http://127.0.0.1:8000/user/validate/" + str(token)
-            send_mail("register", url, settings.EMAIL_HOST_USER, [serializer.data['email']], fail_silently=False)
+            # url = "http://127.0.0.1:8000/user/validate/" + str(token)
+            send_email.delay(token=str(token), email=serializer.data['email'])
+            # send_mail.delay("register", url, settings.EMAIL_HOST_USER, [serializer.data['email']], fail_silently=False)
             return Response({"message": "data store successfully", "data": serializer.data},
                             status=status.HTTP_201_CREATED)
         except Exception as e:
