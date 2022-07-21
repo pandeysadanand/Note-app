@@ -17,4 +17,3 @@ class NoteSerializer(serializers.ModelSerializer):
                 is_archive=validate_data("is_archive")
             )
             return notes
-

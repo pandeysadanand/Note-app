@@ -44,12 +44,12 @@ class RedisOperation:
         :return:
         """
         try:
-            data = self.redis_object.get(user_id)
+            data = self.redis_object.get(int(user_id))
+            print(data)
             if data is None:
                 return []
             data_list = [item for _, item in json.loads(data).items()]
             return data_list
-
         except Exception as e:
             logging.error(e)
 

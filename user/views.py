@@ -80,3 +80,5 @@ class ValidateToken(APIView):
         except Exception as e:
             logging.error(e)
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+# todo swagger

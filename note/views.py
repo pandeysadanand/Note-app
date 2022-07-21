@@ -73,7 +73,14 @@ class NoteView(APIView):
             Displaying note details
         """
         try:
-            data = RedisOperation().get_notes(user_id=request.data.get("user_id"))
-            return Response({"message": "note found", "data": data}, status=status.HTTP_200_OK)
+
+            data = RedisOperation().get_notes(user_id=request.data.get("id"))
+            if data is not None:
+                return Response({"message": "note found", "data": data}, status=status.HTTP_200_OK)
+            else:
+                note = Note.objects.filter(user_id=request.data.get('user_id'))
+                serializer = NoteSerializer(note, many=True)
+                return Response({"message": "note found", "data": serializer.data}, status=status.HTTP_200_OK)
+
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
