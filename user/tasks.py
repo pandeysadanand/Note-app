@@ -13,9 +13,9 @@ def debug_task(self):
 
 
 @shared_task
-def send_email(token, email):
+def send_email_task(token, email):
     try:
-        Email.send_email(token=token, email_id=email)
+        Email.verify_user_email(token=token, email_id=email)
         return "task complete"
     except Exception as e:
         print("task fail")

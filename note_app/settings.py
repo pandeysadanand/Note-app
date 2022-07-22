@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
 from pathlib import Path
-
+import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -23,11 +23,7 @@ SECRET_KEY = 'django-insecure-m-!rk=!emcobwc3b2%wupyb0t!+w0_1d+sdtu#1@v#x+n*fh!7
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'testingapis0275@gmail.com'
-EMAIL_HOST_PASSWORD = 'pqkaxgxqymzpzoca'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+
 ALLOWED_HOSTS = []
 
 # Application definition
@@ -43,6 +39,7 @@ INSTALLED_APPS = [
     'user',
     'note',
     'django_celery_results',
+    'drf_yasg'
 ]
 
 MIDDLEWARE = [
@@ -107,15 +104,15 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        }
-    }
-}
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": "redis://127.0.0.1:6379/1",
+#         "OPTIONS": {
+#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+#         }
+#     }
+# }
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
@@ -145,6 +142,23 @@ CELERY_SETTINGS_URL = 'redis://127.0.0.1:6379'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Kolkata'
-CELERY_ACCEPT_CONTENT = ['json', 'application/text']
+# CELERY_ACCEPT_CONTENT = ['json', 'application/text']
 CELERY_RESULT_BACKEND = 'redis'
 CELERY_CACHE_BACKEND = 'default'
+
+# swagger settings
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        "api_key": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASSWORD")
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
