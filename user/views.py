@@ -117,3 +117,4 @@ class ValidateToken(APIView):
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 # todo swagger
+
