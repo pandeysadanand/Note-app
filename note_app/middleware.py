@@ -22,5 +22,5 @@ class CustomMiddleware:
                 user = User.objects.get(username=request_dict.get("username"))
                 LoginData.objects.create(user_id_id=user.pk, token=response.data['token'])
         except Exception as e:
-            raise e
+            logging.exception(e)
         return response
