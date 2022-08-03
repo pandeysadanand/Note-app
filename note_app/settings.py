@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'user',
     'note',
     'django_celery_results',
-    'drf_yasg'
+    'drf_yasg',
+
 ]
 # import note_app.middleware
 MIDDLEWARE = [
@@ -107,16 +108,16 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": "redis://127.0.0.1:6379/1",
-#         "OPTIONS": {
-#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-#         }
-#     }
-# }
-
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+#
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
 
@@ -145,7 +146,7 @@ CELERY_SETTINGS_URL = 'redis://127.0.0.1:6379'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Kolkata'
-# CELERY_ACCEPT_CONTENT = ['json', 'application/text']
+CELERY_ACCEPT_CONTENT = ['json', 'application/text']
 CELERY_RESULT_BACKEND = 'redis'
 CELERY_CACHE_BACKEND = 'default'
 
@@ -160,8 +161,9 @@ SWAGGER_SETTINGS = {
     }
 }
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASSWORD")
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", 'testingapis0275@gmail.com')
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASSWORD", 'pqkaxgxqymzpzoca')
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+

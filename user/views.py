@@ -9,11 +9,13 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from user.tasks import send_email_task
+from .emails import Email
 from .models import User
+from user.tasks import send_email_task
+from .producer import RabbitServer
 from .serializers import UserSerializer
 from .utils import EncodeDecode
-
+from user.emails import Email
 logging.basicConfig(filename="view.log", filemode="w")
 
 
@@ -37,15 +39,16 @@ class Signup(APIView):
         ))
     def post(self, request):
         """
-            Registering new user with username, phone, location, email
+            Registering new user with name, phone location, email
         """
         serializer = UserSerializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
             serializer.save()
             token = EncodeDecode().encode_token({"id": serializer.data.get('id')})
-            # Email().verify_user_email(serializer.data)
-            send_email_task.delay(token=str(token), email=serializer.data['email'])
+            RabbitServer().send_message(serializer.data)
+            # send_email_task.delay(token=str(token), email=serializer.data['email'])
+            # send_email_task(token=str(token), email=serializer.data['email'])
             return Response({"message": "data store successfully", "data": serializer.data},
                             status=status.HTTP_201_CREATED)
         except Exception as e:
@@ -80,9 +83,8 @@ class Login(APIView):
             username = request.data.get("username")
             password = request.data.get("password")
             user = auth.authenticate(username=username, password=password)
-
+            print(user)
             if user is not None:
-                UserSerializer(user)
                 token = EncodeDecode().encode_token(payload={"user_id": user.pk})
                 return Response({"message": "login successful", "data": {"token": token}}, status=status.HTTP_200_OK)
             else:
@@ -104,9 +106,9 @@ class ValidateToken(APIView):
             decode_token = EncodeDecode().decode_token(token=token)
             user = User.objects.get(id=decode_token.get('id'))
             user.is_verified = True
-            # user.save()
+            user.save()
             serializer = UserSerializer(user)
-            return Response({"message": "Validate Successfully", "data": serializer.data},
+            return Response({"message": "Validate Successfully"},
                             status=status.HTTP_201_CREATED)
         except ExpiredSignatureError:
             return Response({"message": "token expired"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -117,4 +119,3 @@ class ValidateToken(APIView):
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 # todo swagger
-

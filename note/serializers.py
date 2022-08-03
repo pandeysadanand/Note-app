@@ -6,14 +6,10 @@ from note.models import Note
 class NoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Note
-        fields = ['id', 'title', 'color', 'description', 'user_id']
+        fields = ['id', 'title', 'color', 'description', 'user_id', 'is_archive']
 
-        def create(self, validate_data):
-            notes = Note.objects.create(
-                title=validate_data.get("title"),
-                color=validate_data.get("color"),
-                description=validate_data.get("description"),
-                user_id=validate_data.get("user_id"),
-                is_archive=validate_data("is_archive")
-            )
-            return notes
+        def create(self, validated_data):
+            """
+            Create and return a new User instance,given to validate data
+            """
+            return Note.objects.create_note(**validated_data)

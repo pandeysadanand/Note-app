@@ -15,9 +15,6 @@ logging.basicConfig(filename="view.log", filemode="w")
 
 
 class NoteView(APIView):
-    """
-        Creating note view and performing crud operation
-    """
 
     @swagger_auto_schema(manual_parameters=[
         openapi.Parameter('AUTHORIZATION', openapi.IN_HEADER, type=openapi.TYPE_STRING)
@@ -27,7 +24,8 @@ class NoteView(APIView):
             properties={
                 'title': openapi.Schema(type=openapi.TYPE_STRING, description="title"),
                 'color': openapi.Schema(type=openapi.TYPE_STRING, description="color"),
-                'description': openapi.Schema(type=openapi.TYPE_STRING, description="description")
+                'description': openapi.Schema(type=openapi.TYPE_STRING, description="description"),
+                'is_archive': openapi.Schema(type=openapi.TYPE_STRING, description="is_archive")
             }
         ))
     @verify_token
@@ -54,7 +52,8 @@ class NoteView(APIView):
                 'id': openapi.Schema(type=openapi.TYPE_INTEGER, description="id"),
                 'title': openapi.Schema(type=openapi.TYPE_STRING, description="title"),
                 'color': openapi.Schema(type=openapi.TYPE_STRING, description="color"),
-                'description': openapi.Schema(type=openapi.TYPE_STRING, description="description")
+                'description': openapi.Schema(type=openapi.TYPE_STRING, description="description"),
+                'is_archive': openapi.Schema(type=openapi.TYPE_STRING, description="is_archive")
             }
         ))
     @verify_token

@@ -16,11 +16,11 @@ class CustomMiddleware:
 
         response = self.get_response(request)
         try:
-            print(request.path)
             if '/user/login' in request.path:
                 request_dict = json.loads(request.body)
                 user = User.objects.get(username=request_dict.get("username"))
                 LoginData.objects.create(user_id_id=user.pk, token=response.data['token'])
+
         except Exception as e:
-            raise e
+            logging.exception(e)
         return response
