@@ -1,9 +1,7 @@
 import logging
 
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
-from rest_framework import generics
-from rest_framework import mixins
+from rest_framework.response import Response
+from rest_framework import generics, mixins
 
 from .models import Note
 from .serializers import NoteSerializer
@@ -11,65 +9,55 @@ from .serializers import NoteSerializer
 logging.basicConfig(filename="view.log", filemode="w")
 
 
-class NoteView(mixins.ListModelMixin,
-               mixins.RetrieveModelMixin,
-               mixins.UpdateModelMixin,
-               mixins.DestroyModelMixin,
-               mixins.CreateModelMixin,
-               generics.GenericAPIView):
+class NoteView(generics.ListCreateAPIView):
     """
         Creating note view and performing crud operation
     """
     queryset = Note.objects.all()
     serializer_class = NoteSerializer
 
-    @swagger_auto_schema(manual_parameters=[
-        openapi.Parameter('AUTHORIZATION', openapi.IN_HEADER, type=openapi.TYPE_STRING)
-    ], operation_summary="get note by user_id")
-    def get(self, request, *args, **kwargs):
-        # note = Note.objects.filter(user_id=request.data.get('user_id'))
-        # serializer = NoteView.serilizer_class(note, many=True)
-        # return Response({"message": "note found", "data": serializer.data}, status=status.HTTP_200_OK)
-        return self.retrieve(request, *args, **kwargs)
+    def list(self, request):
+        # Note the use of `get_queryset()` instead of `self.queryset`
+        queryset = self.get_queryset()
+        serializer = self.serializer_class(queryset, many=True)
+        return Response(serializer.data)
 
-    @swagger_auto_schema(manual_parameters=[
-        openapi.Parameter('AUTHORIZATION', openapi.IN_HEADER, type=openapi.TYPE_STRING)
-    ], operation_summary="Update notes",
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'id': openapi.Schema(type=openapi.TYPE_INTEGER, description="id"),
-                'title': openapi.Schema(type=openapi.TYPE_STRING, description="title"),
-                'color': openapi.Schema(type=openapi.TYPE_STRING, description="color"),
-                'description': openapi.Schema(type=openapi.TYPE_STRING, description="description")
-            }
-        ))
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
-    @swagger_auto_schema(manual_parameters=[
-        openapi.Parameter('AUTHORIZATION', openapi.IN_HEADER, type=openapi.TYPE_STRING)
-    ], operation_summary="delete note",
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'id': openapi.Schema(type=openapi.TYPE_INTEGER, description="id"),
-            }
-        ))
-    def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
 
-    @swagger_auto_schema(manual_parameters=[
-        openapi.Parameter('AUTHORIZATION', openapi.IN_HEADER, type=openapi.TYPE_STRING)
-    ], operation_summary="Add notes",
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'title': openapi.Schema(type=openapi.TYPE_STRING, description="title"),
-                'color': openapi.Schema(type=openapi.TYPE_STRING, description="color"),
-                'description': openapi.Schema(type=openapi.TYPE_STRING, description="description")
-            }
-        ))
-    def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
+class NoteDetails(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Note.objects.all()
+    serializer_class = NoteSerializer
 
+    def update(self, request, *args, **kwargs):
+        pk = request.data.get('id')
+        queryset = self.get_queryset().get(pk=pk)
+        serializer = self.serializer_class(queryset, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        querysert = self.get_queryset().get(pk=kwargs.get('pk'))
+        serilizer = self.serializer_class(querysert)
+        print(serilizer.data)
+        return Response(serilizer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        pk = request.data.get('id')
+        del (pk)
+        return Response({"message": 'note deleted'})
+
+
+# class NoteDetails(mixins.RetrieveModelMixin, generics.GenericAPIView):
+#     queryset = Note.objects.all()
+#     serializer_class = NoteSerializer
+#     lookup_field = "pk"
+#     def get(self, request, *args, **kwargs):
+#         pk = request.data.get('id')
+#         kwargs['pk']=pk
+#         return self.retrieve(request, *args, **kwargs)
