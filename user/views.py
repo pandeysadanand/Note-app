@@ -9,13 +9,11 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .emails import Email
 from .models import User
-from user.tasks import send_email_task
 from .producer import RabbitServer
 from .serializers import UserSerializer
 from .utils import EncodeDecode
-from user.emails import Email
+from user.tasks import send_email_task
 logging.basicConfig(filename="view.log", filemode="w")
 
 
@@ -24,6 +22,7 @@ def index(request):
 
 
 class Signup(APIView):
+    """class based view for registration"""
 
     @swagger_auto_schema(
         operation_summary="registration",
@@ -40,6 +39,8 @@ class Signup(APIView):
     def post(self, request):
         """
             Registering new user with name, phone location, email
+            :param request: username and password
+            :return: returning message and data
         """
         serializer = UserSerializer(data=request.data)
         try:
@@ -47,7 +48,7 @@ class Signup(APIView):
             serializer.save()
             token = EncodeDecode().encode_token({"id": serializer.data.get('id')})
             RabbitServer().send_message(serializer.data)
-            # send_email_task.delay(token=str(token), email=serializer.data['email'])
+            send_email_task.delay(token=str(token), email=serializer.data['email'])
             # send_email_task(token=str(token), email=serializer.data['email'])
             return Response({"message": "data store successfully", "data": serializer.data},
                             status=status.HTTP_201_CREATED)
@@ -65,6 +66,7 @@ class Signup(APIView):
 
 
 class Login(APIView):
+    """class based views for user login"""
 
     @swagger_auto_schema(
         operation_summary="login",
@@ -78,6 +80,8 @@ class Login(APIView):
     def post(self, request):
         """
             login existing user with username and password
+            param request: username and password
+            return:response
         """
         try:
             username = request.data.get("username")
@@ -94,13 +98,17 @@ class Login(APIView):
 
 
 class ValidateToken(APIView):
+    """class based views for token validation"""
 
     @swagger_auto_schema(
         operation_summary="get user"
     )
     def get(self, request, token):
         """
-            Checking existing token whether it is valid or expired
+        this method is use for get token
+        :param request:
+        :param token:
+        :return:response
         """
         try:
             decode_token = EncodeDecode().decode_token(token=token)
@@ -118,4 +126,3 @@ class ValidateToken(APIView):
             logging.error(e)
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-# todo swagger
