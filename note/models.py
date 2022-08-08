@@ -9,3 +9,7 @@ class Note(models.Model):
     color = models.CharField(max_length=50)
     description = models.TextField()
     is_archive = models.BooleanField(default=False)
+    collaborator = models.ManyToManyField(User, related_name='collaborator')
+
+    def __str__(self):
+        return self.title

@@ -8,6 +8,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from user.models import User
 from .models import Note
 from .serializers import NoteSerializer
 from .utils import verify_token
@@ -36,12 +37,15 @@ class NoteView(APIView):
         """
             Registering note
         """
+        serializer = NoteSerializer(data=request.data)
         try:
-            cursor.execute(
-                "insert into note_note (title,color,description,is_archive,user_id_id) values(%s,%s,%s,%s,%s)",
-                [request.data['title'], request.data['color'], request.data['description'], request.data['is_archive'],
-                 request.data['user_id']])
-            return Response({"message": "Creates successfully"},
+            # cursor.execute(
+            #     "insert into note_note (title,color,description,is_archive,user_id_id) values(%s,%s,%s,%s,%s)",
+            #     [request.data['title'], request.data['color'], request.data['description'], request.data['is_archive'],
+            #      request.data['user_id']])
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response({"message": "Creates successfully", "data": serializer.data},
                             status=status.HTTP_201_CREATED)
         except Exception as e:
             logging.error(e)
@@ -67,13 +71,17 @@ class NoteView(APIView):
         """
 
         try:
-            cursor.execute("update note_note set title=%s,color=%s,description=%s,is_archive=%s where id=%s",
-                           [request.data.get('title'),
-                            request.data.get('color'),
-                            request.data.get('description'),
-                            request.data.get('is_archive'),
-                            request.data.get('id')])
-            return Response({"message": "data updated successfully"},
+            # cursor.execute("update note_note set title=%s,color=%s,description=%s,is_archive=%s where id=%s",
+            #                [request.data.get('title'),
+            #                 request.data.get('color'),
+            #                 request.data.get('description'),
+            #                 request.data.get('is_archive'),
+            #                 request.data.get('id')])
+            note = Note.objects.get(pk=request.data['id'])
+            serializer = NoteSerializer(note, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response({"message": "data updated successfully", "data": serializer.data},
                             status=status.HTTP_202_ACCEPTED)
         except ObjectDoesNotExist:
             return Response({"message": "Note not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -95,8 +103,10 @@ class NoteView(APIView):
             Deleting particular note
         """
         try:
-            pk = request.data['id']
-            cursor.execute('delete from note_note where id=%s', [pk])
+            # pk = request.data['id']
+            # cursor.execute('delete from note_note where id=%s', [pk])
+            note = Note.objects.get(pk=request.data['id'])
+            note.delete()
             return Response({"message": "deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -110,9 +120,37 @@ class NoteView(APIView):
             Displaying note details
         """
         try:
-            note = Note.objects.raw(f"select * from note_note where user_id_id={request.data['user_id']}")
-            serializer = NoteSerializer(note, many=True)
-            return Response({"message": "note found", "data": serializer.data}, status=status.HTTP_200_OK)
+            user = User.objects.get(id=request.data['user_id'])
+            note = user.collaborator.all() | Note.objects.filter(user_id=request.data['user_id'])
+            # note = Note.objects.raw(f"select * from note_note where user_id_id={request.data['user_id']}")
+            # serializer = NoteSerializer(note, many=True)
+            return Response({"message": "note found", "data": NoteSerializer(note, many=True)},
+                            status=status.HTTP_200_OK)
 
         except Exception as e:
+            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class Collaborator(APIView):
+    # verify_token
+    def post(self, request):
+        try:
+            note = Note.objects.get(id=request.data['id'])
+            user = User.objects.get(id=request.data['user_id'])
+            user.collaborator.add(note)
+            return Response({"message": "collaborated successfully"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            logging.error(e)
+            return Response({"error_message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    # verify_token
+    def get(self, request):
+        try:
+            user = User.objects.get(id=request.data['user_id'])
+            note = user.collaborator.all() | Note.objects.filter(user_id=request.data['user_id'])
+            print([i for i in note])
+            return Response({"message": "user found", "data": NoteSerializer(note, many=True).data},
+                            status=status.HTTP_200_OK)
+        except Exception as e:
+            logging.error(e)
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
