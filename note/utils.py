@@ -4,6 +4,7 @@ from functools import wraps
 
 from rest_framework.response import Response
 
+from note.serializers import LabelSerializer
 from note_app.redis_service import RedisService
 from user.utils import EncodeDecode
 
@@ -31,6 +32,22 @@ def verify_token(function):
         return function(self, request)
 
     return wrapper
+
+
+def get_note_format(note_data):
+    note_list = []
+    for note in note_data:
+        note_labels = note.label_set.all()
+        note_list.append({
+            "note_id": note.id,
+            "title": note.title,
+            "description": note.description,
+            "color": note.color,
+            "archive": note.archive,
+            "label_list": LabelSerializer(note_labels, many=True).data
+        })
+
+    return note_list
 
 
 class RedisOperation:
